@@ -1,14 +1,18 @@
-#CS2303
-#NAME: Stephanie Callejas
-#Assigment: Lab 1 Option C
-#Instructor: Diego Aguirre
-#T.A: Manoj Saha
-#Date: September 17, 2018
-#Purpose: Find the real password that is hashed in the users file document
+# CS2303
+# NAME: Stephanie Callejas
+# Assigment: Lab 1 Option C
+# Instructor: Diego Aguirre
+# T.A: Manoj Saha
+# Date: September 17, 2018
+# Purpose: Find the real password that is hashed in the users file document
 
 
 import hashlib
-import itertools
+from itertools import product
+
+user_name = {}
+comList = "0123456789"
+list_of_passwords = []
 
 
 def hash_with_sha256(str):
@@ -19,33 +23,36 @@ def hash_with_sha256(str):
     return hex_dig
 
 
+def processFileLine(record):
+    values = record.split(',')
+    user_name[values[0]] = values
+
+
+def generatePassword(lowerLimit, upperLimit):
+    list_of_passwords = product(comList, repeat=lowerLimit)
+    lowerLimit += 1
+    for i in list(list_of_passwords):
+        gen_pass = ''.join(i)
+        print("Generated Password: " + gen_pass)
+        checkForPassword(gen_pass)
+        if lowerLimit <= upperLimit:
+            generatePassword(lowerLimit, upperLimit)
+
+
+def checkForPassword(gen_pass):
+    for key, value in user_name.items():
+        if value[2] == hash_with_sha256(gen_pass.join(value[1])):
+            print("Password Matches user: " + key)
+        else:
+            print("has no password")
+
+
 def main():
-    a = input("Minimum password length ");
-    b = input("Maximum password length ");
-    list = []
+    with open('password_file.txt') as openfileobject:
+        for record in openfileobject:
+            processFileLine(record)
 
-    #password generated of maximum length J
-    for j in range(int(a), int(b) + 1):
-        for i in itertools.product([0, 1, 2, 3, 4, 5, 6, 7, 8, 9], repeat=int(j)):
-            list.append(''.join(map(str, i)))
-    print("Password generated")
-
-    #reads the users file
-    input_file = open("password_file.txt", "r")
-
-    #reads the file then splits the name, salt and hashed value
-    for line in input_file:
-        name, salt, hashed_value = line.split(",");
-        salt.replace(" ", " ");
-        hashed_value.replace(" ", " ")
-        print("Applying bruteforce for ", name)
-    for password in list:
-        password.replace(" ", " ");
-
-    #concatenate s with a user's salt value and apply the hashlib.sha256 method to the resulting string.
-        hex_dig = hash_with_sha256(salt + password);
-    if (hex_dig == hashed_value):
-        print(name + "has password: " + password)
+    generatePassword(3, 6)
 
 
 main()
